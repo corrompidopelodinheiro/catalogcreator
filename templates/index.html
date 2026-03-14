@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Gerador de Catálogo</title>
+<link rel="stylesheet" href="/static/style.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="page">
+
+<div class="card">
+
+<h1>Gerador de Catálogo</h1>
+
+<p class="subtitle">
+Envie a planilha com os dados dos produtos e as imagens correspondentes.
+</p>
+
+<p class="info">
+As imagens devem ter o mesmo nome do <b>SKU_ATUAL</b> presente na planilha.
+<br>
+Exemplo: <b>10461972.jpg</b>
+</p>
+
+<form action="/generate" method="post" enctype="multipart/form-data">
+
+<div class="section">
+
+<label>Planilha de Dados</label>
+
+<label class="filebox">
+<i class="fa-solid fa-file-arrow-up"></i>
+<span>Enviar Planilha Excel</span>
+<input id="datafile" type="file" name="datafile" required>
+</label>
+
+<div id="data-info" class="file-info"></div>
+
+</div>
+
+<div class="section">
+
+<label>Imagens dos Produtos</label>
+
+<label class="filebox big">
+
+<i class="fa-solid fa-cloud-arrow-up cloud"></i>
+
+<p class="upload-text">
+Arraste as imagens aqui ou clique para selecionar
+</p>
+
+<input id="images" type="file" name="images" multiple required>
+
+</label>
+
+<div id="image-info" class="file-info"></div>
+
+</div>
+
+<button class="generate-btn">
+Gerar Catálogo
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+<script>
+
+const dataInput = document.getElementById("datafile")
+const imageInput = document.getElementById("images")
+
+const dataInfo = document.getElementById("data-info")
+const imageInfo = document.getElementById("image-info")
+
+
+dataInput.addEventListener("change", function(){
+
+if(this.files.length > 0){
+
+dataInfo.innerHTML =
+"<b>Planilha selecionada:</b><br>" +
+this.files[0].name
+
+}
+
+})
+
+
+imageInput.addEventListener("change", function(){
+
+let html = "<b>Imagens selecionadas (" + this.files.length + "):</b><br>"
+
+for(let i=0;i<this.files.length;i++){
+
+html += this.files[i].name + "<br>"
+
+}
+
+imageInfo.innerHTML = html
+
+})
+
+</script>
+
+</body>
+</html>
