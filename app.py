@@ -55,86 +55,36 @@ def generate():
 
     row = 1
     tempfiles = []
-    used_skus = set()
 
-    # -------------------
-    # IMAGENS
-    # -------------------
-
+    # criar mapa de imagens por SKU
+    images_map = {}
     for imgfile in images:
-
         filename = imgfile.filename
         sku = os.path.splitext(filename)[0].strip()
+        images_map[sku] = imgfile
 
-        item = data[data["SKU_ATUAL"] == sku]
-
-        if item.empty:
-            continue
-
-        used_skus.add(sku)
-
-        oldsku = item.iloc[0]["SKU_ANTIGO"]
-        description = item.iloc[0]["DESCRICAO"]
-
-        img = PILImage.open(imgfile.stream)
-        img.thumbnail(imagesize)
-
-        temppath = f"temp_{sku}.png"
-        img.save(temppath)
-        tempfiles.append(temppath)
-
-        ws.add_image(Image(temppath), f"B{row}")
-
-        ws.merge_cells(f"D{row}:G{row}")
-        c = ws[f"D{row}"]
-        c.value = f"SKU ATUAL: {sku}"
-        c.fill = greenfill
-        c.font = titlefont
-        c.alignment = centeralign
-        c.border = thinborder
-
-        ws.merge_cells(f"D{row+1}:G{row+3}")
-        c = ws[f"D{row+1}"]
-        c.value = f"DESCRIÇÃO:\n{description}"
-        c.font = textfont
-        c.alignment = wrapalign
-        c.border = thinborder
-
-        ws.merge_cells(f"D{row+4}:G{row+4}")
-        c = ws[f"D{row+4}"]
-        c.value = f"SKU ANTIGO: {oldsku}"
-        c.fill = yellowfill
-        c.font = textfont
-        c.alignment = centeralign
-        c.border = thinborder
-
-        for r in range(row, row+5):
-            for col in range(4,8):
-                ws.cell(r,col).border = thinborder
-
-        ws.row_dimensions[row].height = 35
-        ws.row_dimensions[row+1].height = 38
-        ws.row_dimensions[row+2].height = 38
-        ws.row_dimensions[row+3].height = 38
-        ws.row_dimensions[row+4].height = 30
-
-        row += 12
-
-
-    # -------------------
-    # SKUS SEM FOTO
-    # -------------------
-
+    # percorrer TODOS os SKUs da planilha
     for _, item in data.iterrows():
 
         sku = item["SKU_ATUAL"]
-
-        if sku in used_skus:
-            continue
-
         oldsku = item["SKU_ANTIGO"]
         description = item["DESCRICAO"]
 
+        # se tiver imagem
+        if sku in images_map:
+
+            imgfile = images_map[sku]
+
+            img = PILImage.open(imgfile.stream)
+            img.thumbnail(imagesize)
+
+            temppath = f"temp_{sku}.png"
+            img.save(temppath)
+            tempfiles.append(temppath)
+
+            ws.add_image(Image(temppath), f"B{row}")
+
+        # SKU ATUAL
         ws.merge_cells(f"D{row}:G{row}")
         c = ws[f"D{row}"]
         c.value = f"SKU ATUAL: {sku}"
@@ -143,6 +93,7 @@ def generate():
         c.alignment = centeralign
         c.border = thinborder
 
+        # DESCRIÇÃO
         ws.merge_cells(f"D{row+1}:G{row+3}")
         c = ws[f"D{row+1}"]
         c.value = f"DESCRIÇÃO:\n{description}"
@@ -150,6 +101,7 @@ def generate():
         c.alignment = wrapalign
         c.border = thinborder
 
+        # SKU ANTIGO
         ws.merge_cells(f"D{row+4}:G{row+4}")
         c = ws[f"D{row+4}"]
         c.value = f"SKU ANTIGO: {oldsku}"
@@ -169,7 +121,6 @@ def generate():
         ws.row_dimensions[row+4].height = 30
 
         row += 12
-
 
     wb.save("catalogo.xlsx")
 
@@ -178,7 +129,6 @@ def generate():
             os.remove(temp)
 
     return send_file("catalogo.xlsx", as_attachment=True)
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
