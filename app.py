@@ -10,11 +10,9 @@ app = Flask(__name__)
 
 imagesize = (220,220)
 
-
 @app.route("/")
 def index():
     return render_template("index.html")
-
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -57,6 +55,11 @@ def generate():
 
     row = 1
     tempfiles = []
+    used_skus = set()
+
+    # -------------------
+    # IMAGENS
+    # -------------------
 
     for imgfile in images:
 
@@ -68,11 +71,13 @@ def generate():
         if item.empty:
             continue
 
+        used_skus.add(sku)
+
         oldsku = item.iloc[0]["SKU_ANTIGO"]
         description = item.iloc[0]["DESCRICAO"]
 
         img = PILImage.open(imgfile.stream)
-        img.thumbnail((220,220))
+        img.thumbnail(imagesize)
 
         temppath = f"temp_{sku}.png"
         img.save(temppath)
@@ -114,6 +119,57 @@ def generate():
         ws.row_dimensions[row+4].height = 30
 
         row += 12
+
+
+    # -------------------
+    # SKUS SEM FOTO
+    # -------------------
+
+    for _, item in data.iterrows():
+
+        sku = item["SKU_ATUAL"]
+
+        if sku in used_skus:
+            continue
+
+        oldsku = item["SKU_ANTIGO"]
+        description = item["DESCRICAO"]
+
+        ws.merge_cells(f"D{row}:G{row}")
+        c = ws[f"D{row}"]
+        c.value = f"SKU ATUAL: {sku}"
+        c.fill = greenfill
+        c.font = titlefont
+        c.alignment = centeralign
+        c.border = thinborder
+
+        ws.merge_cells(f"D{row+1}:G{row+3}")
+        c = ws[f"D{row+1}"]
+        c.value = f"DESCRIÇÃO:\n{description}"
+        c.font = textfont
+        c.alignment = wrapalign
+        c.border = thinborder
+
+        ws.merge_cells(f"D{row+4}:G{row+4}")
+        c = ws[f"D{row+4}"]
+        c.value = f"SKU ANTIGO: {oldsku}"
+        c.fill = yellowfill
+        c.font = textfont
+        c.alignment = centeralign
+        c.border = thinborder
+
+        for r in range(row, row+5):
+            for col in range(4,8):
+                ws.cell(r,col).border = thinborder
+
+        ws.row_dimensions[row].height = 35
+        ws.row_dimensions[row+1].height = 38
+        ws.row_dimensions[row+2].height = 38
+        ws.row_dimensions[row+3].height = 38
+        ws.row_dimensions[row+4].height = 30
+
+        row += 12
+
 
     wb.save("catalogo.xlsx")
 
